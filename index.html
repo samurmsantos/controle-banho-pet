@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Banhos Pet</title>
+
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f3f6f8;
+            color: #263238;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.06);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #1683b8;
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #d9e0e5;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #1683b8;
+            box-shadow: 0 0 0 2px rgba(22,131,184,0.12);
+        }
+
+        .extra-service-form {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr) auto;
+            gap: 8px;
+        }
+
+        .extra-service-form input {
+            min-width: 0;
+        }
+
+        .extra-service-date {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .extra-service-date label {
+            margin: 0;
+            color: #555;
+            font-size: 12px;
+        }
+
+        .btn-add {
+            border: none;
+            border-radius: 10px;
+            padding: 0 16px;
+            background: #e3f4fc;
+            color: #126b96;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .extra-service-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .extra-service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f3f6f8;
+            font-size: 14px;
+        }
+
+        .extra-service-item button {
+            border: none;
+            background: transparent;
+            color: #b02a37;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .month-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 22px 0;
+        }
+
+        .month-navigation button {
+            border: none;
+            background: #e3f4fc;
+            color: #126b96;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        #monthYear {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 7px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-weight: bold;
+            color: #888;
+            font-size: 12px;
+            padding: 10px 0;
+        }
+
+        .day {
+            min-height: 43px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #f3f5f6;
+            cursor: pointer;
+            transition: 0.15s;
+            user-select: none;
+        }
+
+        .day:hover {
+            background: #e1eee7;
+        }
+
+        .day.selected {
+            background: #8ed3f2;
+            color: white;
+            font-weight: bold;
+        }
+
+        .day.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .legend {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 12px;
+        }
+
+        .summary {
+            background: #eaf7fd;
+            padding: 20px;
+            margin-top: 25px;
+            border-radius: 14px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .total {
+            border-top: 1px solid #c5e8f7;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 21px;
+            font-weight: bold;
+            color: #126b96;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            width: 100%;
+        }
+
+        .btn-pdf {
+            background: #1683b8;
+            color: white;
+        }
+
+        .btn-pdf:hover {
+            background: #126b96;
+        }
+
+        .btn-clear {
+            background: #e9ecef;
+            color: #444;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 22px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 18px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .calendar {
+                gap: 5px;
+            }
+
+            .day {
+                min-height: 40px;
+                font-size: 14px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .extra-service-form {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .extra-service-date {
+                grid-column: 1 / -1;
+            }
+
+            .btn-add {
+                min-height: 44px;
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🐾 Controle de Banhos</h1>
+        <p>Registro de atendimentos e fechamento mensal</p>
+    </div>
+
+    <!-- Nome do cachorro -->
+    <div class="form-group">
+        <label for="dogName">Nome do cachorro</label>
+        <input type="text" id="dogName" placeholder="Ex: Thor">
+    </div>
+
+    <!-- Valor do banho -->
+    <div class="form-group">
+        <label for="bathPrice">Valor por banho (R$)</label>
+        <input type="number" id="bathPrice" placeholder="Ex: 35,00" min="0" step="0.01">
+    </div>
+
+    <div class="form-group">
+        <label for="extraServiceName">Valores a mais — serviço extra</label>
+        <div class="extra-service-form">
+            <input type="text" id="extraServiceName" placeholder="Ex: Tosa">
+            <input type="number" id="extraServicePrice" placeholder="Valor (R$)" min="0.01" step="0.01">
+            <div class="extra-service-date">
+                <label for="extraServiceDate">Data do serviço</label>
+                <input type="date" id="extraServiceDate" required>
+            </div>
+            <button class="btn-add" type="button" onclick="addExtraService()">Adicionar</button>
+        </div>
+        <div class="extra-service-list" id="extraServiceList"></div>
+    </div>
+
+    <!-- Navegação do mês -->
+    <div class="month-navigation">
+        <button onclick="changeMonth(-1)">‹</button>
+        <span id="monthYear"></span>
+        <button onclick="changeMonth(1)">›</button>
+    </div>
+
+    <!-- Calendário -->
+    <div class="calendar" id="calendar"></div>
+
+    <div class="legend">
+        🟩 Toque nos dias em que o cachorro veio tomar banho.
+    </div>
+
+    <!-- Resumo -->
+    <div class="summary">
+
+        <div class="summary-row">
+            <span>Banhos realizados</span>
+            <strong id="bathCount">0</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Valor por banho</span>
+            <strong id="unitValue">R$ 0,00</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Serviços extras</span>
+            <strong id="extraServiceCount">0</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Valores a mais</span>
+            <strong id="extraServiceTotal">R$ 0,00</strong>
+        </div>
+
+        <div class="summary-row total">
+            <span>Total do mês</span>
+            <span id="totalValue">R$ 0,00</span>
+        </div>
+
+    </div>
+
+    <!-- Botões -->
+    <div class="buttons">
+        <button class="btn btn-pdf" onclick="generatePDF()">
+            📄 Gerar nota em PDF
+        </button>
+
+        <button class="btn btn-clear" onclick="clearMonth()">
+            Limpar dias
+        </button>
+    </div>
+
+    <div class="footer">
+        Controle de atendimentos • Petshop
+    </div>
+
+</div>
+
+<script>
+    const calendar = document.getElementById("calendar");
+    const monthYear = document.getElementById("monthYear");
+
+    const bathPriceInput = document.getElementById("bathPrice");
+    const dogNameInput = document.getElementById("dogName");
+    const extraServiceNameInput = document.getElementById("extraServiceName");
+    const extraServicePriceInput = document.getElementById("extraServicePrice");
+    const extraServiceDateInput = document.getElementById("extraServiceDate");
+    const extraServiceList = document.getElementById("extraServiceList");
+
+    let currentDate = new Date();
+    currentDate.setDate(1);
+
+    // Dias selecionados para cada mês.
+    // Os dados ficam somente na memória desta página.
+    let selectedDays = {};
+    let extraServices = {};
+
+    const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+    function getMonthKey() {
+        return `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+    }
+
+    function getSelectedDays() {
+        const key = getMonthKey();
+
+        if (!selectedDays[key]) {
+            selectedDays[key] = [];
+        }
+
+        return selectedDays[key];
+    }
+
+    function getExtraServices() {
+        const key = getMonthKey();
+
+        if (!extraServices[key]) {
+            extraServices[key] = [];
+        }
+
+        return extraServices[key];
+    }
+
+    function renderCalendar() {
+        calendar.innerHTML = "";
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        monthYear.textContent = currentDate.toLocaleDateString("pt-BR", {
+            month: "long",
+            year: "numeric"
+        });
+        updateExtraServiceDateBounds();
+
+        // Cabeçalho dos dias da semana
+        weekdays.forEach(day => {
+            const el = document.createElement("div");
+            el.className = "weekday";
+            el.textContent = day;
+            calendar.appendChild(el);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+
+        // Ajusta domingo (0) para o final da semana
+        const startOffset = (firstDay + 6) % 7;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const selected = getSelectedDays();
+        renderExtraServices();
+
+        // Espaços vazios antes do primeiro dia
+        for (let i = 0; i < startOffset; i++) {
+            const empty = document.createElement("div");
+            empty.className = "day empty";
+            calendar.appendChild(empty);
+        }
+
+        // Cria os dias do mês
+        for (let day = 1; day <= daysInMonth; day++) {
+            const el = document.createElement("div");
+            el.className = "day";
+            el.textContent = day;
+
+            if (selected.includes(day)) {
+                el.classList.add("selected");
+            }
+
+            el.onclick = () => toggleDay(day);
+
+            calendar.appendChild(el);
+        }
+
+        updateSummary();
+    }
+
+    function toggleDay(day) {
+        const selected = getSelectedDays();
+
+        if (selected.includes(day)) {
+            selectedDays[getMonthKey()] =
+                selected.filter(d => d !== day);
+        } else {
+            selected.push(day);
+        }
+
+        renderCalendar();
+    }
+
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+        extraServiceDateInput.value = "";
+        renderCalendar();
+    }
+
+    function updateExtraServiceDateBounds() {
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const year = currentDate.getFullYear();
+        const lastDay = new Date(year, currentDate.getMonth() + 1, 0).getDate();
+
+        extraServiceDateInput.min = `${year}-${month}-01`;
+        extraServiceDateInput.max = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+    }
+
+    function updateSummary() {
+        const count = getSelectedDays().length;
+        const price = parseFloat(bathPriceInput.value) || 0;
+        const extras = getExtraServices();
+        const extrasTotal = extras.reduce((sum, service) => sum + service.price, 0);
+        const total = count * price + extrasTotal;
+
+        document.getElementById("bathCount").textContent = count;
+        document.getElementById("extraServiceCount").textContent = extras.length;
+
+        document.getElementById("unitValue").textContent =
+            formatCurrency(price);
+
+        document.getElementById("extraServiceTotal").textContent =
+            formatCurrency(extrasTotal);
+
+        document.getElementById("totalValue").textContent =
+            formatCurrency(total);
+    }
+
+    function renderExtraServices() {
+        extraServiceList.innerHTML = "";
+
+        getExtraServices().forEach((service, index) => {
+            const item = document.createElement("div");
+            item.className = "extra-service-item";
+
+            const description = document.createElement("span");
+            description.textContent = `${formatServiceDate(service.date)} · ${service.name} — ${formatCurrency(service.price)}`;
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.textContent = "Remover";
+            removeButton.setAttribute("aria-label", `Remover serviço ${service.name}`);
+            removeButton.onclick = () => removeExtraService(index);
+
+            item.append(description, removeButton);
+            extraServiceList.appendChild(item);
+        });
+    }
+
+    function addExtraService() {
+        const name = extraServiceNameInput.value.trim();
+        const price = Number(extraServicePriceInput.value);
+        const date = extraServiceDateInput.value;
+
+        if (!name) {
+            alert("Informe o nome do serviço extra.");
+            extraServiceNameInput.focus();
+            return;
+        }
+
+        if (!Number.isFinite(price) || price <= 0) {
+            alert("Informe um valor válido para o serviço extra.");
+            extraServicePriceInput.focus();
+            return;
+        }
+
+        if (!date) {
+            alert("Informe a data em que o serviço foi realizado.");
+            extraServiceDateInput.focus();
+            return;
+        }
+
+        const serviceDate = new Date(`${date}T00:00:00`);
+        if (
+            Number.isNaN(serviceDate.getTime()) ||
+            serviceDate.getFullYear() !== currentDate.getFullYear() ||
+            serviceDate.getMonth() !== currentDate.getMonth()
+        ) {
+            alert("A data do serviço deve pertencer ao mês selecionado.");
+            extraServiceDateInput.focus();
+            return;
+        }
+
+        getExtraServices().push({ name, price, date });
+        extraServiceNameInput.value = "";
+        extraServicePriceInput.value = "";
+        extraServiceDateInput.value = "";
+        renderExtraServices();
+        updateSummary();
+        extraServiceNameInput.focus();
+    }
+
+    function formatServiceDate(date) {
+        const [year, month, day] = date.split("-");
+        return `${day}/${month}/${year}`;
+    }
+
+    function removeExtraService(index) {
+        getExtraServices().splice(index, 1);
+        renderExtraServices();
+        updateSummary();
+    }
+
+    function formatCurrency(value) {
+        return value.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+    }
+
+    bathPriceInput.addEventListener("input", updateSummary);
+
+    function clearMonth() {
+        if (confirm("Deseja apagar todos os dias selecionados deste mês?")) {
+            selectedDays[getMonthKey()] = [];
+            renderCalendar();
+        }
+    }
+
+    function generatePDF() {
+        const dogName = dogNameInput.value.trim();
+        const price = parseFloat(bathPriceInput.value) || 0;
+        const days = [...getSelectedDays()].sort((a, b) => a - b);
+        const extras = getExtraServices();
+        const total = days.length * price +
+            extras.reduce((sum, service) => sum + service.price, 0);
+
+        if (!dogName) {
+            alert("Por favor, informe o nome do cachorro.");
+            dogNameInput.focus();
+            return;
+        }
+
+        if (days.length === 0 && extras.length === 0) {
+            alert("Selecione pelo menos um dia de banho ou adicione um serviço extra.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const monthName = currentDate.toLocaleDateString("pt-BR", {
+            month: "long",
+            year: "numeric"
+        });
+
+        const monthNumber = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const year = currentDate.getFullYear();
+
+        // Cabeçalho
+        doc.setFillColor(22, 131, 184);
+        doc.rect(0, 0, 210, 40, "F");
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("NOTA DE SERVIÇOS", 105, 17, { align: "center" });
+
+        doc.setFontSize(12);
+        doc.text("PETSHOP • CONTROLE DE BANHOS", 105, 28, { align: "center" });
+
+        // Dados
+        doc.setTextColor(40, 40, 40);
+
+        doc.setFontSize(12);
+        doc.text(`Pet: ${dogName}`, 20, 55);
+        doc.text(`Referência: ${monthName}`, 20, 65);
+
+        doc.text(`Valor por banho: ${formatCurrency(price)}`, 20, 80);
+
+        doc.text(`Quantidade de banhos: ${days.length}`, 20, 90);
+
+        // Tabela manual
+        let y = 110;
+
+        doc.setFont("helvetica", "normal");
+
+        function drawTableHeader() {
+            doc.setFillColor(234, 247, 253);
+            doc.rect(20, y - 7, 170, 12, "F");
+            doc.setFont("helvetica", "bold");
+            doc.text("DATA DO SERVIÇO", 25, y);
+            doc.text("DESCRIÇÃO DO SERVIÇO", 75, y);
+            doc.text("VALOR (R$)", 155, y);
+            doc.setFont("helvetica", "normal");
+            y += 12;
+        }
+
+        function addTableRow(date, serviceName, servicePrice) {
+            if (y > 260) {
+                doc.addPage();
+                y = 25;
+                drawTableHeader();
+            }
+
+            doc.text(formatServiceDate(date), 25, y);
+            doc.text(serviceName, 75, y);
+            doc.text(formatCurrency(servicePrice), 155, y);
+            y += 10;
+        }
+
+        drawTableHeader();
+
+        const services = [
+            ...days.map(day => ({
+                date: `${year}-${monthNumber}-${String(day).padStart(2, "0")}`,
+                name: "Banho",
+                price
+            })),
+            ...extras.map(service => ({
+                date: service.date,
+                name: service.name,
+                price: service.price
+            }))
+        ].sort((first, second) => first.date.localeCompare(second.date));
+
+        services.forEach(service =>
+            addTableRow(service.date, service.name, service.price)
+        );
+
+        // Total
+        y += 8;
+        if (y > 260) {
+            doc.addPage();
+            y = 25;
+        }
+
+        doc.setFillColor(234, 247, 253);
+        doc.rect(20, y - 7, 170, 16, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(18, 107, 150);
+
+        doc.text("TOTAL A PAGAR:", 25, y + 3);
+        doc.text(formatCurrency(total), 185, y + 3, { align: "right" });
+
+        // Rodapé
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont("helvetica", "normal");
+        doc.text("Obrigado pela preferência!", 105, 275, { align: "center" });
+
+        // Salvar arquivo
+        const safeName = dogName.replace(/[^a-z0-9]/gi, "_");
+
+        doc.save(`Nota_${safeName}_${monthNumber}_${year}.pdf`);
+    }
+
+    // Inicializa
+    renderCalendar();
+</script>
+
+</body>
+</html>
